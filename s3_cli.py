@@ -5,6 +5,8 @@ Example: Uploading small and large files to S3 bucket:
 $ python s3_cli.py upload-small <file_path> <bucket_name> [--object-name <object_name>]
 $ python s3_cli.py upload-large <file_path> <bucket_name> [--object-name <object_name>] [--part-size <part_size>]
 
+Example: add lifecycle policy to delete objects after 120 days:L
+$ python s3_cli.py set-lifecycle-policy <bucket_name> [--days <days>]
 '''
 
 import argparse
@@ -147,6 +149,27 @@ def upload_large_file(file_path, bucket_name, object_name=None, part_size=5 * 10
         logging.error(f"Error uploading large file {object_name} to bucket {bucket_name}: {e}")
         s3.abort_multipart_upload(Bucket=bucket_name, Key=object_name, UploadId=upload_id)
 
+def create_lifecycle_policy(bucket_name, days=120):
+    s3 = init_client()
+
+    lifecycle_configuration = {
+        "Rules": [
+            {
+                "ID": "Delete objects after 120 days",
+                "Status": "Enabled",
+                "Filter": {},
+                "Expiration": {"Days": days},
+            }
+        ]
+    }
+
+    try:
+        s3.put_bucket_lifecycle_configuration(Bucket=bucket_name, LifecycleConfiguration=lifecycle_configuration)
+        logging.info(f"Lifecycle policy created for bucket {bucket_name} to delete objects after {days} days.")
+    except ClientError as e:
+        logging.error(f"Error creating lifecycle policy for bucket {bucket_name}: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="A simple CLI for managing AWS S3 buckets.")
     subparsers = parser.add_subparsers(dest="command")
@@ -168,6 +191,11 @@ def main():
     delete_parser = subparsers.add_parser("delete", help="Delete an existing S3 bucket")
     delete_parser.add_argument("bucket_name", help="Name of the bucket to delete")
 
+    set_lifecycle_policy_parser = subparsers.add_parser("set-lifecycle-policy", help="Create a lifecycle policy to delete objects after a specified number of days")
+    set_lifecycle_policy_parser.add_argument("bucket_name", help="Name of the target bucket")
+    set_lifecycle_policy_parser.add_argument("--days", type=int, default=120, help="Number of days after which objects should be deleted (default: 120)")
+
+
     args = parser.parse_args()
 
     if args.command == "list":
@@ -186,6 +214,9 @@ def main():
 
     elif args.command == "upload-large":
         upload_large_file(args.file_path, args.bucket_name, object_name=args.object_name, part_size=args.part_size)
+    elif args.command == "set-lifecycle-policy":
+        create_lifecycle_policy(args.bucket_name, days=args.days)
+
 
 
 if name == "main":
