@@ -13,14 +13,14 @@ A simple command-line interface (CLI) for managing AWS S3 buckets using Python a
 1. Clone this repository:
 
 ```bash
-$ git clone git@github.com:IrakliDevelop/s3-cli-python.git
-$ cd s3-cli
+git clone git@github.com:IrakliDevelop/s3-cli-python.git;
+cd s3-cli
 ```
 
 2. Install the dependencies using Poetry:
 
 ```bash
-$ poetry install
+poetry install
 ```
 
 3. Create a `.env` file in the project directory with your AWS credentials:
@@ -37,7 +37,7 @@ Replace `your_access_key_id`, `your_secret_access_key`, and `your_aws_region` wi
 
 Run the CLI using the following command:
 ```bash
-$ poetry run python s3_cli.py <command> [arguments]
+poetry run python s3_cli.py <command> [arguments]
 ```
 
 Replace `<command>` with one of the available commands and provide any required arguments.
@@ -53,7 +53,7 @@ Replace `<command>` with one of the available commands and provide any required 
 
 For more information on the arguments and options for each command, run:
 ```bash
-$ poetry run python s3_cli.py <command> --help
+poetry run python s3_cli.py <command> --help
 ```
 
 Replace `<command>` with one of the available commands.
