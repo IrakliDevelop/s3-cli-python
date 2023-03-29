@@ -1,5 +1,10 @@
 '''
 Run with - python s3_cli.py <command> [arguments]
+
+Example: Uploading small and large files to S3 bucket:
+$ python s3_cli.py upload-small <file_path> <bucket_name> [--object-name <object_name>]
+$ python s3_cli.py upload-large <file_path> <bucket_name> [--object-name <object_name>] [--part-size <part_size>]
+
 '''
 
 import argparse
@@ -101,9 +106,61 @@ def read_bucket_policy(bucket_name):
         logging.error(f"Error reading bucket policy for {bucket_name}: {e}")
     return None
 
+def upload_small_file(file_path, bucket_name, object_name=None):
+    s3 = init_client()
+    object_name = object_name or os.path.basename(file_path)
+
+    with open(file_path, "rb") as file:
+        try:
+            s3.put_object(Bucket=bucket_name, Key=object_name, Body=file)
+            logging.info(f"File {object_name} uploaded to bucket {bucket_name} successfully.")
+        except ClientError as e:
+            logging.error(f"Error uploading file {object_name} to bucket {bucket_name}: {e}")
+
+def upload_large_file(file_path, bucket_name, object_name=None, part_size=5 * 1024 * 1024):
+    s3 = init_client()
+    object_name = object_name or os.path.basename(file_path)
+
+    try:
+        # Create a multipart upload
+        response = s3.create_multipart_upload(Bucket=bucket_name, Key=object_name)
+        upload_id = response["UploadId"]
+
+        parts = []
+        part_number = 1
+
+        with open(file_path, "rb") as file:
+            while True:
+                data = file.read(part_size)
+                if not data:
+                    break
+
+                # Upload the part
+                response = s3.upload_part(Bucket=bucket_name, Key=object_name, PartNumber=part_number, UploadId=upload_id, Body=data)
+                parts.append({"PartNumber": part_number, "ETag": response["ETag"]})
+                part_number += 1
+
+        # Complete the multipart upload
+        s3.complete_multipart_upload(Bucket=bucket_name, Key=object_name, UploadId=upload_id, MultipartUpload={"Parts": parts})
+        logging.info(f"Large file {object_name} uploaded to bucket {bucket_name} successfully.")
+    except ClientError as e:
+        logging.error(f"Error uploading large file {object_name} to bucket {bucket_name}: {e}")
+        s3.abort_multipart_upload(Bucket=bucket_name, Key=object_name, UploadId=upload_id)
+
 def main():
     parser = argparse.ArgumentParser(description="A simple CLI for managing AWS S3 buckets.")
     subparsers = parser.add_subparsers(dest="command")
+    upload_small_parser = subparsers.add_parser("upload-small", help="Upload a small file to an S3 bucket")
+    upload_small_parser.add_argument("file_path", help="Path to the file to be uploaded")
+    upload_small_parser.add_argument("bucket_name", help="Name of the target bucket")
+    upload_small_parser.add_argument("--object-name", help="Name of the object in the S3 bucket (default: same as file name)")
+
+    upload_large_parser = subparsers.add_parser("upload-large", help="Upload a large file to an S3 bucket")
+    upload_large_parser.add_argument("file_path", help="Path to the file to be uploaded")
+    upload_large_parser.add_argument("bucket_name", help="Name of the target bucket")
+    upload_large_parser.add_argument("--object-name", help="Name of the object in the S3 bucket (default: same as file name)")
+    upload_large_parser.add_argument("--part-size", type=int, default=5 * 1024 * 1024, help="Size of each part in bytes (default: 5MB)")
+
     list_parser = subparsers.add_parser("list", help="List all S3 buckets")
     create_parser = subparsers.add_parser("create", help="Create a new S3 bucket")
     create_parser.add_argument("bucket_name", help="Name of the new bucket")
@@ -124,6 +181,12 @@ def main():
 
     elif args.command == "delete":
         delete_bucket(args.bucket_name)
+    elif args.command == "upload-small":
+        upload_small_file(args.file_path, args.bucket_name, object_name=args.object_name)
+
+    elif args.command == "upload-large":
+        upload_large_file(args.file_path, args.bucket_name, object_name=args.object_name, part_size=args.part_size)
+
 
 if name == "main":
     main()
