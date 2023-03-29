@@ -10,6 +10,7 @@ $ python s3_cli.py set-lifecycle-policy <bucket_name> [--days <days>]
 """
 
 import argparse
+import json
 import logging
 from dotenv import load_dotenv
 
@@ -35,6 +36,7 @@ logging.basicConfig(level=logging.INFO)
 def main():
     parser = argparse.ArgumentParser(description="A simple CLI for managing AWS S3 buckets.")
     subparsers = parser.add_subparsers(dest="command")
+
     upload_small_parser = subparsers.add_parser("upload-small", help="Upload a small file to an S3 bucket")
     upload_small_parser.add_argument("file_path", help="Path to the file to be uploaded")
     upload_small_parser.add_argument("bucket_name", help="Name of the target bucket")
@@ -49,6 +51,11 @@ def main():
     list_parser = subparsers.add_parser("list", help="List all S3 buckets")
     create_parser = subparsers.add_parser("create", help="Create a new S3 bucket")
     create_parser.add_argument("bucket_name", help="Name of the new bucket")
+
+    download_upload_parser = subparsers.add_parser("download-upload", help="Download a file from a URL and upload it to an S3 bucket")
+    download_upload_parser.add_argument("url", help="URL of the file to download")
+    download_upload_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
+    download_upload_parser.add_argument("object_name", help="Name of the object in the S3 bucket")
 
     delete_parser = subparsers.add_parser("delete", help="Delete an existing S3 bucket")
     delete_parser.add_argument("bucket_name", help="Name of the bucket to delete")
@@ -65,6 +72,21 @@ def main():
 
     bucket_exists_parser = subparsers.add_parser("bucket-exists", help="Check if an S3 bucket exists")
     bucket_exists_parser.add_argument("bucket_name", help="Name of the bucket")
+
+    set_object_access_parser = subparsers.add_parser("set-object-access", help="Set object access policy for an object in an S3 bucket")
+    set_object_access_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
+    set_object_access_parser.add_argument("object_name", help="Name of the object in the S3 bucket")
+    set_object_access_parser.add_argument("access", choices=["private", "public-read"], help="Access policy to apply")
+
+    read_bucket_policy_parser = subparsers.add_parser("read-bucket-policy", help="Read bucket policy for an S3 bucket")
+    read_bucket_policy_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
+
+    create_bucket_policy_parser = subparsers.add_parser("create-bucket-policy", help="Create a bucket policy for an S3 bucket")
+    create_bucket_policy_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
+    create_bucket_policy_parser.add_argument("policy_file", help="Path to the JSON policy file")
+
+    generate_public_read_parser = subparsers.add_parser("generate-public-read-policy", help="Generate a public read policy for an S3 bucket")
+    generate_public_read_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
 
     args = parser.parse_args()
 
@@ -100,7 +122,28 @@ def main():
             print(f"Bucket '{args.bucket_name}' exists.")
         else:
             print(f"Bucket '{args.bucket_name}' does not exist.")
+    elif args.command == "download-upload":
+        download_file_and_upload_to_s3(args.url, args.bucket_name, args.object_name)
+    elif args.command == "set-object-access":
+        set_object_access_policy(args.bucket_name, args.object_name, args.access)
 
+    elif args.command == "read-bucket-policy":
+        policy = read_bucket_policy(args.bucket_name)
+        if policy:
+            print("Bucket policy:")
+            print(json.dumps(policy, indent=2))
+        else:
+            print(f"No bucket policy found for bucket '{args.bucket_name}'.")
+
+    elif args.command == "create-bucket-policy":
+        with open(args.policy_file, "r") as policy_file:
+            policy = json.load(policy_file)
+        create_bucket_policy(args.bucket_name, policy)
+
+    elif args.command == "generate-public-read-policy":
+        policy = generate_public_read_policy(args.bucket_name)
+        print("Generated public read policy:")
+        print(json.dumps(policy, indent=2))
 
 
 if __name__ == '__main__':
