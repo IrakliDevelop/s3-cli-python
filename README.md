@@ -12,30 +12,33 @@ A simple command-line interface (CLI) for managing AWS S3 buckets using Python a
 
 1. Clone this repository:
 
-git clone git@github.com:IrakliDevelop/s3-cli-python.git
-cd s3-cli
-
+```bash
+$ git clone git@github.com:IrakliDevelop/s3-cli-python.git
+$ cd s3-cli
+```
 
 2. Install the dependencies using Poetry:
 
-poetry install
-
+```bash
+$ poetry install
+```
 
 3. Create a `.env` file in the project directory with your AWS credentials:
 
+```bash
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=your_aws_region
-
+```
 
 Replace `your_access_key_id`, `your_secret_access_key`, and `your_aws_region` with your actual AWS credentials and region.
 
 ## Usage
 
 Run the CLI using the following command:
-
+```bash
 $ poetry run python s3_cli.py <command> [arguments]
-
+```
 
 Replace `<command>` with one of the available commands and provide any required arguments.
 
@@ -49,9 +52,9 @@ Replace `<command>` with one of the available commands and provide any required 
 - `set-lifecycle-policy <bucket_name> [--days <days>]`: Create a lifecycle policy to delete objects after a specified number of days.
 
 For more information on the arguments and options for each command, run:
-
+```bash
 $ poetry run python s3_cli.py <command> --help
-
+```
 
 Replace `<command>` with one of the available commands.
 
