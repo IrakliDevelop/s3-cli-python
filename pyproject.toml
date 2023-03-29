@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "s3-cli"
+version = "0.1.0"
+description = ""
+authors = ["Irakli Iremashvili"]
+readme = "README.md"
+packages = [{include = "s3_cli"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+boto3 = "^1.26.101"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
