@@ -10,13 +10,10 @@ $ python s3_cli.py set-lifecycle-policy <bucket_name> [--days <days>]
 """
 
 import argparse
-import os
 import logging
-from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 
 # Importing s3_utils
-from s3_utils.s3_client import init_client
 from s3_utils.list_buckets import list_buckets
 from s3_utils.create_bucket import create_bucket
 from s3_utils.delete_bucket import delete_bucket
