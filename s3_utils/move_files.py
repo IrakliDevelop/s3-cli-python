@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from botocore.exceptions import ClientError
 
-from s3_utils.client import init_client
+from s3_utils.s3_client import init_client
 
 def move_files_to_extension_folders(bucket_name):
     s3 = init_client()
