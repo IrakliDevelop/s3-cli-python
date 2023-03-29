@@ -28,6 +28,7 @@ from s3_utils.bucket_policy import set_object_access_policy,\
     create_lifecycle_policy
 from s3_utils.check_versioning_status import check_versioning_status
 from s3_utils.list_file_versions import list_file_versions
+from s3_utils.move_files import move_files_to_extension_folders
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -88,6 +89,9 @@ def main():
     generate_public_read_parser = subparsers.add_parser("generate-public-read-policy", help="Generate a public read policy for an S3 bucket")
     generate_public_read_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
 
+    move_files_parser = subparsers.add_parser("move-files", elp="Move files in an S3 bucket to folders based on their extensions")
+    move_files_parser.add_argument("bucket_name", help="Name of the target S3 bucket")
+
     args = parser.parse_args()
 
     if args.command == "list":
@@ -144,6 +148,13 @@ def main():
         policy = generate_public_read_policy(args.bucket_name)
         print("Generated public read policy:")
         print(json.dumps(policy, indent=2))
+
+    elif args.command == "move-files":
+        moved_files_count = move_files_to_extension_folders(args.bucket_name)
+        if moved_files_count is not None:
+            print("Moved files count:")
+            for ext, count in moved_files_count.items():
+                print(f"  {ext}: {count}")
 
 
 if __name__ == '__main__':
