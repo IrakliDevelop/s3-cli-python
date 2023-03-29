@@ -63,6 +63,8 @@ def main():
     list_file_versions_parser = subparsers.add_parser("list-file-versions", help="List file versions in an S3 bucket")
     list_file_versions_parser.add_argument("bucket_name", help="Name of the bucket")
 
+    bucket_exists_parser = subparsers.add_parser("bucket-exists", help="Check if an S3 bucket exists")
+    bucket_exists_parser.add_argument("bucket_name", help="Name of the bucket")
 
     args = parser.parse_args()
 
@@ -92,6 +94,12 @@ def main():
         print("File versions:")
         for version in file_versions:
             print(f"  Key: {version['Key']}, VersionId: {version['VersionId']}, LastModified: {version['LastModified']}")
+    elif args.command == "bucket-exists":
+        exists = bucket_exists(args.bucket_name)
+        if exists:
+            print(f"Bucket '{args.bucket_name}' exists.")
+        else:
+            print(f"Bucket '{args.bucket_name}' does not exist.")
 
 
 
