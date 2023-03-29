@@ -168,6 +168,38 @@ def create_lifecycle_policy(bucket_name, days=120):
         logging.info(f"Lifecycle policy created for bucket {bucket_name} to delete objects after {days} days.")
     except ClientError as e:
         logging.error(f"Error creating lifecycle policy for bucket {bucket_name}: {e}")
+def check_versioning_status(bucket_name):
+    s3 = init_client()
+
+    try:
+        response = s3.get_bucket_versioning(Bucket=bucket_name)
+        versioning_status = response.get("Status", "Not enabled")
+        return versioning_status
+    except ClientError as e:
+        logging.error(f"Error retrieving versioning status for bucket {bucket_name}: {e}")
+        return None
+
+def list_file_versions(bucket_name):
+    s3 = init_client()
+
+    try:
+        response = s3.list_object_versions(Bucket=bucket_name)
+        versions = response.get("Versions", [])
+
+        file_versions = []
+        for version in versions:
+            file_versions.append(
+                {
+                    "Key": version["Key"],
+                    "VersionId": version["VersionId"],
+                    "LastModified": version["LastModified"],
+                }
+            )
+
+        return file_versions
+    except ClientError as e:
+        logging.error(f"Error listing file versions for bucket {bucket_name}: {e}")
+        return None
 
 
 def main():
@@ -195,6 +227,12 @@ def main():
     set_lifecycle_policy_parser.add_argument("bucket_name", help="Name of the target bucket")
     set_lifecycle_policy_parser.add_argument("--days", type=int, default=120, help="Number of days after which objects should be deleted (default: 120)")
 
+    check_versioning_parser = subparsers.add_parser("check-versioning", help="Check if versioning is enabled for an S3 bucket")
+    check_versioning_parser.add_argument("bucket_name", help="Name of the bucket")
+
+    list_file_versions_parser = subparsers.add_parser("list-file-versions", help="List file versions in an S3 bucket")
+    list_file_versions_parser.add_argument("bucket_name", help="Name of the bucket")
+
 
     args = parser.parse_args()
 
@@ -216,6 +254,14 @@ def main():
         upload_large_file(args.file_path, args.bucket_name, object_name=args.object_name, part_size=args.part_size)
     elif args.command == "set-lifecycle-policy":
         create_lifecycle_policy(args.bucket_name, days=args.days)
+    elif args.command == "check-versioning":
+        versioning_status = check_versioning_status(args.bucket_name)
+        print(f"Versioning status for bucket {args.bucket_name}: {versioning_status}")
+    elif args.command == "list-file-versions":
+        file_versions = list_file_versions(args.bucket_name)
+        print("File versions:")
+        for version in file_versions:
+            print(f"  Key: {version['Key']}, VersionId: {version['VersionId']}, LastModified: {version['LastModified']}")
 
 
 
