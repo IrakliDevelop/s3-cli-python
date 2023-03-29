@@ -1,4 +1,4 @@
-'''
+"""
 Run with - python s3_cli.py <command> [arguments]
 
 Example: Uploading small and large files to S3 bucket:
@@ -7,7 +7,7 @@ $ python s3_cli.py upload-large <file_path> <bucket_name> [--object-name <object
 
 Example: add lifecycle policy to delete objects after 120 days:L
 $ python s3_cli.py set-lifecycle-policy <bucket_name> [--days <days>]
-'''
+"""
 
 import argparse
 import os
